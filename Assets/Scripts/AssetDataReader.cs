@@ -13,7 +13,8 @@ public static class AssetDataReader
 
         // Assuming the baseUrl is at the root level of your XML, similar to previous structure.
         // If not, you'll need to adjust the location where baseUrl is set.
-        baseUrl = doc.Root.Element("baseUrl")?.Value ?? string.Empty;
+        //baseUrl = doc.Root.Element("baseUrl")?.Value ?? string.Empty;
+        baseUrl = doc.Root.Element("baseUrl").Value;
 
         foreach (XElement itemElement in doc.Root.Elements("Item"))
         {

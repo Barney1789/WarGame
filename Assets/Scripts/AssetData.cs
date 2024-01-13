@@ -11,11 +11,11 @@ public class AssetData
     public string BackgroundImageUrl { get; set; }
 
 
-    public AssetData(string id, string description, int price, string previewImageUrl, string backgroundImageUrl)
+    public AssetData(string itemId, string itemDescription, int itemPrice, string previewImageUrl, string backgroundImageUrl)
     {
-        Id = id;
-        Description = description;
-        Price = price;
+        Id = itemId;
+        Description = itemDescription;
+        Price = itemPrice;
         PreviewImageUrl = previewImageUrl;
         BackgroundImageUrl = backgroundImageUrl;
     }
