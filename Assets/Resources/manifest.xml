@@ -1,0 +1,24 @@
+<StoreItems>
+    <Item>
+      <ItemId>background1</ItemId>
+      <ItemDescription>Green1</ItemDescription>
+      <ItemPrice>300</ItemPrice>
+      <PreviewImageUrl>gs://war-card-game-789.appspot.com/3137_lowres.jpg</PreviewImageUrl>
+      <BackgroundImageUrl>gs://war-card-game-789.appspot.com/3137.jpg</BackgroundImageUrl>
+    </Item>
+    <Item>
+      <ItemId>background2</ItemId>
+      <ItemDescription>Green2</ItemDescription>
+      <ItemPrice>350</ItemPrice>
+      <PreviewImageUrl>gs://war-card-game-789.appspot.com/58469_lowres.jpg</PreviewImageUrl>
+      <BackgroundImageUrl>gs://war-card-game-789.appspot.com/58469.jpg</BackgroundImageUrl>
+    </Item>
+    <Item>
+      <ItemId>background3</ItemId>
+      <ItemDescription>Green3</ItemDescription>
+      <ItemPrice>400</ItemPrice>
+      <PreviewImageUrl>gs://war-card-game-789.appspot.com/58471_lowres.jpg</PreviewImageUrl>
+      <BackgroundImageUrl>gs://war-card-game-789.appspot.com/58471.jpg</BackgroundImageUrl>
+    </Item>
+  </StoreItems>
+  
