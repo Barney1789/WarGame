@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Firebase.Extensions;
@@ -6,7 +8,6 @@ using Firebase.Storage;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using System.IO;
 public class DLC_Manager : MonoBehaviour
 {
     private FirebaseStorage _instance;
@@ -47,7 +48,7 @@ public class DLC_Manager : MonoBehaviour
         DisplayAssets(assets, imageBaseUrl);
     }
 
-    private void DisplayAssets(List<AssetData> assets, string baseUrl)
+   /* private void DisplayAssets(List<AssetData> assets, string baseUrl)
     {
         foreach (AssetData asset in assets)
         {
@@ -58,7 +59,45 @@ public class DLC_Manager : MonoBehaviour
             RawImage rawImageComponent = saleItem.transform.Find("ItemImage").GetComponent<RawImage>();
             DownloadImageAsync(imageRef, rawImageComponent);
         }
+    }*/
+        private void DisplayAssets(List<AssetData> assets, string baseUrl) {
+        Debug.Log("DisplayAssets called with assets count: " + assets.Count);
+
+        foreach (AssetData asset in assets) {
+            Debug.Log($"Creating item with ID: {asset.ItemId}");
+
+            GameObject saleItem = Instantiate(saleItemPrefab, saleItemsContainer);
+            if (saleItem == null) {
+                Debug.LogError("Instantiated saleItem is null!");
+                continue;
+            }
+
+            TMP_Text nameText = saleItem.transform.Find("Text").GetComponent<TMP_Text>();
+            if (nameText == null) {
+                Debug.LogError("NameText component not found!");
+            } else {
+                nameText.text = asset.ItemDescription;
+                Debug.Log($"Assigned name: {asset.ItemDescription}");
+            }
+
+            TMP_Text priceText = saleItem.transform.Find("PriceText").GetComponent<TMP_Text>();
+            if (priceText == null) {
+                Debug.LogError("PriceText component not found!");
+            } else {
+                priceText.text = asset.ItemPrice.ToString();
+                Debug.Log($"Assigned price: {asset.ItemPrice}");
+            }
+
+            RawImage rawImageComponent = saleItem.transform.Find("ItemImage").GetComponent<RawImage>();
+            if (rawImageComponent == null) {
+                Debug.LogError("RawImage component not found!");
+            } else {
+                StorageReference imageRef = _instance.GetReferenceFromUrl(asset.PreviewImageUrl);
+                DownloadImageAsync(imageRef, rawImageComponent);
+            }
+        }
     }
+
 
     private void DownloadImageAsync(StorageReference reference, RawImage imageComponent)
     {
