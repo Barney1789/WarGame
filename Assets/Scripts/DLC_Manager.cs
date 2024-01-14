@@ -14,6 +14,8 @@ public class DLC_Manager : MonoBehaviour
     [SerializeField] private Transform saleItemsContainer;
     [SerializeField] private GameObject saleItemPrefab;
 
+    private bool IsPurchased(string itemId) {return PlayerPrefs.GetInt(itemId, 0) == 1;}
+
     void Start()
     {
         // Initialize Firebase
@@ -47,19 +49,6 @@ public class DLC_Manager : MonoBehaviour
         List<AssetData> assets = AssetDataReader.ReadAssetsFromXml(xmlText, out string imageBaseUrl);
         DisplayAssets(assets, imageBaseUrl);
     }
-
-   /* private void DisplayAssets(List<AssetData> assets, string baseUrl)
-    {
-        foreach (AssetData asset in assets)
-        {
-            GameObject saleItem = Instantiate(saleItemPrefab, saleItemsContainer);
-            saleItem.transform.Find("Text").GetComponent<TMP_Text>().text = asset.Description;
-            saleItem.transform.Find("PriceText").GetComponent<TMP_Text>().text = asset.Price.ToString();
-            StorageReference imageRef = _instance.GetReferenceFromUrl(asset.PreviewImageUrl);
-            RawImage rawImageComponent = saleItem.transform.Find("ItemImage").GetComponent<RawImage>();
-            DownloadImageAsync(imageRef, rawImageComponent);
-        }
-    }*/
         private void DisplayAssets(List<AssetData> assets, string baseUrl) {
         Debug.Log("DisplayAssets called with assets count: " + assets.Count);
 
@@ -95,6 +84,14 @@ public class DLC_Manager : MonoBehaviour
                 StorageReference imageRef = _instance.GetReferenceFromUrl(asset.PreviewImageUrl);
                 DownloadImageAsync(imageRef, rawImageComponent);
             }
+            // Adding a listener to the sale item's purchase button
+            Button purchaseButton = saleItem.transform.Find("Button").GetComponent<Button>();
+            purchaseButton.onClick.AddListener(() => PurchaseDLC(asset.ItemPrice, asset, purchaseButton));
+                // Disable the button if the item is already purchased
+                if (IsPurchased(asset.ItemId)) {
+                    purchaseButton.interactable = false;
+                    purchaseButton.GetComponentInChildren<TMP_Text>().text = "Purchased";
+                }
         }
     }
 
@@ -118,4 +115,17 @@ public class DLC_Manager : MonoBehaviour
         }
     });
     }
+
+    private void PurchaseDLC(int price, AssetData asset, Button purchaseButton) {
+    if (WalletManager.Instance.SpendCoins(price)) { //this is line 113
+        // Grant access to the DLC
+        Debug.Log($"Purchased {asset.ItemDescription}");
+        PlayerPrefs.SetInt(asset.ItemId, 1); // Mark the item as purchased
+        purchaseButton.interactable = false; // Disable the button
+        purchaseButton.GetComponentInChildren<TMP_Text>().text = "Purchased"; // Update button text
+        // Additional code to enable the DLC in the game
+    } else {
+        Debug.Log("Not enough coins to purchase this DLC.");
+    }}
+
 }
