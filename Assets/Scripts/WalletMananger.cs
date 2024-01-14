@@ -30,6 +30,12 @@ public class WalletManager : MonoBehaviour
             // Add 500 coins to the wallet
             AddCoins(500);
         }
+        // Check if the 'M' key was pressed
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            // Reset the game
+            PlayerPrefs.DeleteAll();
+        }
     }
 
 

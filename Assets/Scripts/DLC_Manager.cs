@@ -89,7 +89,7 @@ public class DLC_Manager : MonoBehaviour
             purchaseButton.onClick.AddListener(() => PurchaseDLC(asset.ItemPrice, asset, purchaseButton));
                 // Disable the button if the item is already purchased
                 if (IsPurchased(asset.ItemId)) {
-                    purchaseButton.interactable = false;
+                    purchaseButton.interactable = true;
                     purchaseButton.GetComponentInChildren<TMP_Text>().text = "Purchased";
                 }
         }
@@ -98,7 +98,7 @@ public class DLC_Manager : MonoBehaviour
 
     private void DownloadImageAsync(StorageReference reference, RawImage imageComponent)
     {
-        const long maxAllowedSize =2 * 1024 * 1024; // 2MB
+        const long maxAllowedSize =6 * 1024 * 1024; // 6MB
         reference.GetBytesAsync(maxAllowedSize).ContinueWithOnMainThread(task => {
         if (task.IsFaulted || task.IsCanceled) {
         Debug.LogException(task.Exception);
@@ -117,15 +117,38 @@ public class DLC_Manager : MonoBehaviour
     }
 
     private void PurchaseDLC(int price, AssetData asset, Button purchaseButton) {
-    if (WalletManager.Instance.SpendCoins(price)) { //this is line 113
-        // Grant access to the DLC
-        Debug.Log($"Purchased {asset.ItemDescription}");
-        PlayerPrefs.SetInt(asset.ItemId, 1); // Mark the item as purchased
-        purchaseButton.interactable = false; // Disable the button
-        purchaseButton.GetComponentInChildren<TMP_Text>().text = "Purchased"; // Update button text
-        // Additional code to enable the DLC in the game
-    } else {
-        Debug.Log("Not enough coins to purchase this DLC.");
-    }}
+        // Check if the item is already purchased
+        if (IsPurchased(asset.ItemId)) {
+            Debug.Log($"{asset.ItemDescription} is already owned.");
+            // Additional code to use the already owned DLC
+        } else {
+            // Proceed with purchase if the item is not owned yet
+            if (WalletManager.Instance.SpendCoins(price)) {
+                // Grant access to the DLC
+                Debug.Log($"Purchased {asset.ItemDescription}");
+                PlayerPrefs.SetInt(asset.ItemId, 1); // Mark the item as purchased
+                purchaseButton.GetComponentInChildren<TMP_Text>().text = "Owned"; // Update button text to "Owned"
+                // Additional code to enable the DLC in the game
+            } else {
+                Debug.Log("Not enough coins to purchase this DLC.");
+            }
+        }
+    }
+
+
+    private void DownloadBackgroundImageAsync(string imageUrl) {
+    StorageReference imageRef = _instance.GetReferenceFromUrl(imageUrl);
+    DownloadImageAsync(imageRef, null); // Assuming you modify the existing DownloadImageAsync method
+    Debug.Log("Download Background Done.");
+    }
+
+    private void OnOwnedButtonClicked(string itemId, string localFileName) {
+    // Save the local file name of the purchased item
+    PlayerPrefs.SetString("selectedDLCImage", localFileName);
+    PlayerPrefs.Save();
+    // Assuming you call this method when the Owned button is clicked
+    }   
+
+
 
 }
