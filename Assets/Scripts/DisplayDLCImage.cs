@@ -14,19 +14,41 @@ public class DisplayDLCImage : MonoBehaviour
 {
     [SerializeField] private RawImage displayImage;
 
-    void Start()
-    {
-        DisplayMostRecentDownloadedImage();
+    void Start() {
+        string lastImageFileName = PlayerPrefs.GetString("LastDisplayedImage", "");
+
+        if (!string.IsNullOrEmpty(lastImageFileName)) {
+            string filePath = Path.Combine(Application.persistentDataPath, lastImageFileName);
+            if (File.Exists(filePath)) {
+                LoadImageFromFile(filePath);
+            } else {
+                Debug.LogError("Saved image file not found: " + filePath);
+            }
+        }
     }
 
+
+
     void OnEnable() {
-        DLC_Manager.OnImageDownloaded += DisplayMostRecentDownloadedImage;
+        DLC_Manager.OnDLCItemPurchased += DisplayImageForItem;
     }
 
     void OnDisable() {
-        DLC_Manager.OnImageDownloaded -= DisplayMostRecentDownloadedImage;
+        DLC_Manager.OnDLCItemPurchased -= DisplayImageForItem;
     }
 
+    private void DisplayImageForItem(string itemId) {
+        string fileName = itemId + "background.png"; // Assuming this is how your file names are formed
+        string filePath = Path.Combine(Application.persistentDataPath, fileName);
+
+        if (File.Exists(filePath)) {
+            LoadImageFromFile(filePath);
+            PlayerPrefs.SetString("LastDisplayedImage", fileName); //display2
+            PlayerPrefs.Save(); //display2
+        } else {
+            Debug.LogError("Image file not found: " + filePath);
+        }
+    }
     private void DisplayMostRecentDownloadedImage()
     {
         string mostRecentFile = GetMostRecentFile(Application.persistentDataPath, "*background.png");

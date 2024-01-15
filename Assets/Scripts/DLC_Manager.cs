@@ -14,7 +14,8 @@ public class DLC_Manager : MonoBehaviour
     [SerializeField] private Transform saleItemsContainer;
     [SerializeField] private GameObject saleItemPrefab;
     private bool IsPurchased(string itemId) {return PlayerPrefs.GetInt(itemId, 0) == 1;}
-    public static event Action OnImageDownloaded;
+    public static event Action<string> OnDLCItemPurchased;
+    public static event Action OnImageDownloaded; //download display
 
 
     void Start()
@@ -129,6 +130,7 @@ public class DLC_Manager : MonoBehaviour
         if (IsPurchased(asset.ItemId)) {
             Debug.Log($"{asset.ItemDescription} is already owned.");
             // Additional code to use the already owned DLC
+            OnDLCItemPurchased?.Invoke(asset.ItemId);
         } else {
             // Proceed with purchase if the item is not owned yet
             if (WalletManager.Instance.SpendCoins(price)) {
@@ -140,6 +142,7 @@ public class DLC_Manager : MonoBehaviour
                 // Download the background image associated with the DLC
                 string fileName = asset.ItemId + "background.png"; // Create a filename based on the asset's ID
                 DownloadBackgroundImage(asset.BackgroundImageUrl, fileName); // Download background image
+                //OnDLCItemPurchased?.Invoke(asset.ItemId);
             } else {
                 Debug.Log("Not enough coins to purchase this DLC.");
             }
@@ -161,7 +164,7 @@ public class DLC_Manager : MonoBehaviour
                 string localPath = Path.Combine(Application.persistentDataPath, localFileName);
                 File.WriteAllBytes(localPath, fileContents);
                 Debug.Log($"Background image '{localFileName}' saved to {localPath}");
-                OnImageDownloaded?.Invoke();
+                //OnImageDownloaded?.Invoke(); //this is for the download display
                 // Log the size of the file
                 FileInfo fileInfo = new FileInfo(localPath);
                 Debug.Log($"Size of '{localFileName}': {fileInfo.Length} bytes");
