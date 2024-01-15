@@ -16,6 +16,12 @@ public class DLC_Manager : MonoBehaviour
     private bool IsPurchased(string itemId) {return PlayerPrefs.GetInt(itemId, 0) == 1;}
     public static event Action<string> OnDLCItemPurchased;
     public static event Action OnImageDownloaded; //download display
+    [SerializeField] private TMP_Text purchaseMessageText;
+    [SerializeField] private Slider downloadProgressSlider;
+
+
+
+
 
 
     void Start()
@@ -138,7 +144,7 @@ public class DLC_Manager : MonoBehaviour
                 Debug.Log($"Purchased {asset.ItemDescription}");
                 PlayerPrefs.SetInt(asset.ItemId, 1); // Mark the item as purchased
                 purchaseButton.GetComponentInChildren<TMP_Text>().text = "Owned"; // Update button text to "Owned"
-                
+                //StartCoroutine(DLCText("You unlocked " + asset.ItemId, 3)); // 3 seconds display of Special Message 
                 // Download the background image associated with the DLC
                 string fileName = asset.ItemId + "background.png"; // Create a filename based on the asset's ID
                 DownloadBackgroundImage(asset.BackgroundImageUrl, fileName); // Download background image
@@ -156,7 +162,19 @@ public class DLC_Manager : MonoBehaviour
 
     private void DownloadBackImageAsync(StorageReference reference, string localFileName) {
         const long maxAllowedSize = 6 * 1024 * 1024; // 6MB
-        reference.GetBytesAsync(maxAllowedSize).ContinueWithOnMainThread(task => {
+
+        string localPath = Path.Combine(Application.persistentDataPath, localFileName);
+        downloadProgressSlider.gameObject.SetActive(true); //slider
+        downloadProgressSlider.value = 0; //slider
+        var downloadTask = reference.GetBytesAsync(maxAllowedSize, new StorageProgress<DownloadState>(progress =>
+        {
+            downloadProgressSlider.value = (float)progress.BytesTransferred / maxAllowedSize;
+        }));
+
+        //reference.GetBytesAsync(maxAllowedSize).ContinueWithOnMainThread(task => 
+        downloadTask.ContinueWithOnMainThread(task => 
+        {
+             downloadProgressSlider.gameObject.SetActive(false);
             if (task.IsFaulted || task.IsCanceled) {
                 Debug.LogError($"Download failed for {localFileName}: {task.Exception}");
             } else {
@@ -168,21 +186,21 @@ public class DLC_Manager : MonoBehaviour
                 // Log the size of the file
                 FileInfo fileInfo = new FileInfo(localPath);
                 Debug.Log($"Size of '{localFileName}': {fileInfo.Length} bytes");
+                StartCoroutine(DLCText("DLC Downloaded and ready to use ", 3)); // 3 seconds display of Special Message 
             }
         });
     }
 
-
-
-
-
-
-    private void OnOwnedButtonClicked(string itemId, string localFileName) {
-    // Save the local file name of the purchased item
-    PlayerPrefs.SetString("selectedDLCImage", localFileName);
-    PlayerPrefs.Save();
-    // Assuming you call this method when the Owned button is clicked
+    private System.Collections.IEnumerator DLCText(string message, float seconds)//for the special effect
+    {
+        purchaseMessageText.text = message;
+        purchaseMessageText.gameObject.SetActive(true);
+        yield return new WaitForSeconds(seconds);
+        purchaseMessageText.gameObject.SetActive(false);
     }
+
+
+
 
    
 
