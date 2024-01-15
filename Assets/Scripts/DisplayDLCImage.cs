@@ -8,24 +8,50 @@ using Firebase.Storage;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Linq;
 
-public class DisplayDLCImage : MonoBehaviour {
-    public RawImage displayImage;
+public class DisplayDLCImage : MonoBehaviour
+{
+    [SerializeField] private RawImage displayImage;
 
-    void Start() {
-        // Get the path to the image file
-        string localFileName = PlayerPrefs.GetString("selectedDLCImage", "");
-        if (!string.IsNullOrEmpty(localFileName)) {
-            string filePath = Path.Combine(Application.persistentDataPath, localFileName);
-            if (File.Exists(filePath)) {
-                byte[] fileData = File.ReadAllBytes(filePath);
-                Texture2D texture = new Texture2D(2, 2);
-                if (texture.LoadImage(fileData)) {
-                    displayImage.texture = texture;
-                }
-            } else {
-                Debug.LogError("Saved image file not found.");
-            }
+    void Start()
+    {
+        DisplayMostRecentDownloadedImage();
+    }
+
+    void OnEnable() {
+        DLC_Manager.OnImageDownloaded += DisplayMostRecentDownloadedImage;
+    }
+
+    void OnDisable() {
+        DLC_Manager.OnImageDownloaded -= DisplayMostRecentDownloadedImage;
+    }
+
+    private void DisplayMostRecentDownloadedImage()
+    {
+        string mostRecentFile = GetMostRecentFile(Application.persistentDataPath, "*background.png");
+        if (!string.IsNullOrEmpty(mostRecentFile))
+        {
+            LoadImageFromFile(mostRecentFile);
+        }
+        else
+        {
+            Debug.LogError("No downloaded image found");
         }
     }
+
+    private string GetMostRecentFile(string directory, string pattern)
+    {
+        var files = new DirectoryInfo(directory).GetFiles(pattern);
+        return files.OrderByDescending(f => f.CreationTime).FirstOrDefault()?.FullName;
+    }
+
+    private void LoadImageFromFile(string filePath)
+    {
+        byte[] fileData = File.ReadAllBytes(filePath);
+        Texture2D texture = new Texture2D(2, 2);
+        texture.LoadImage(fileData);
+        displayImage.texture = texture;
+    }
 }
+

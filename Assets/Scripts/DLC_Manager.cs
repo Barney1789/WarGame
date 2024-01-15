@@ -13,8 +13,9 @@ public class DLC_Manager : MonoBehaviour
     private FirebaseStorage _instance;
     [SerializeField] private Transform saleItemsContainer;
     [SerializeField] private GameObject saleItemPrefab;
-
     private bool IsPurchased(string itemId) {return PlayerPrefs.GetInt(itemId, 0) == 1;}
+    public static event Action OnImageDownloaded;
+
 
     void Start()
     {
@@ -25,7 +26,7 @@ public class DLC_Manager : MonoBehaviour
         DownloadManifestAsync("gs://war-card-game-789.appspot.com/manifest.xml");
     }
 
-    private void DownloadManifestAsync(string manifestUrl)
+    public void DownloadManifestAsync(string manifestUrl)
     {
         StorageReference manifestRef = _instance.GetReferenceFromUrl(manifestUrl);
         string localFile = Path.Combine(Application.persistentDataPath, "manifest.xml");
@@ -82,11 +83,12 @@ public class DLC_Manager : MonoBehaviour
                 Debug.LogError("RawImage component not found!");
             } else {
                 StorageReference imageRef = _instance.GetReferenceFromUrl(asset.PreviewImageUrl);
-                DownloadImageAsync(imageRef, rawImageComponent);
+                DownloadImageAsync(imageRef, rawImageComponent, asset.ItemId + ".png");
             }
             // Adding a listener to the sale item's purchase button
             Button purchaseButton = saleItem.transform.Find("Button").GetComponent<Button>();
             purchaseButton.onClick.AddListener(() => PurchaseDLC(asset.ItemPrice, asset, purchaseButton));
+
                 // Disable the button if the item is already purchased
                 if (IsPurchased(asset.ItemId)) {
                     purchaseButton.interactable = true;
@@ -96,9 +98,9 @@ public class DLC_Manager : MonoBehaviour
     }
 
 
-    private void DownloadImageAsync(StorageReference reference, RawImage imageComponent)
+    public void DownloadImageAsync(StorageReference reference, RawImage imageComponent,string localFileName)
     {
-        const long maxAllowedSize =6 * 1024 * 1024; // 6MB
+        const long maxAllowedSize =2 * 1024 * 1024; // 6MB
         reference.GetBytesAsync(maxAllowedSize).ContinueWithOnMainThread(task => {
         if (task.IsFaulted || task.IsCanceled) {
         Debug.LogException(task.Exception);
@@ -112,6 +114,12 @@ public class DLC_Manager : MonoBehaviour
         // Assign the loaded texture to the image component
         imageComponent.texture = texture;
         Debug.Log("Finished downloading image in memory!");
+        //for Display
+        string localPath = Path.Combine(Application.persistentDataPath, localFileName);
+        File.WriteAllBytes(localPath, fileContents);
+        PlayerPrefs.SetString("selectedDLCImage", localFileName);
+        PlayerPrefs.Save();
+        Debug.Log($"Image saved to {localPath} and filename saved in PlayerPrefs.");
         }
     });
     }
@@ -128,26 +136,52 @@ public class DLC_Manager : MonoBehaviour
                 Debug.Log($"Purchased {asset.ItemDescription}");
                 PlayerPrefs.SetInt(asset.ItemId, 1); // Mark the item as purchased
                 purchaseButton.GetComponentInChildren<TMP_Text>().text = "Owned"; // Update button text to "Owned"
-                // Additional code to enable the DLC in the game
+                
+                // Download the background image associated with the DLC
+                string fileName = asset.ItemId + "background.png"; // Create a filename based on the asset's ID
+                DownloadBackgroundImage(asset.BackgroundImageUrl, fileName); // Download background image
             } else {
                 Debug.Log("Not enough coins to purchase this DLC.");
             }
         }
     }
 
-
-    private void DownloadBackgroundImageAsync(string imageUrl) {
-    StorageReference imageRef = _instance.GetReferenceFromUrl(imageUrl);
-    DownloadImageAsync(imageRef, null); // Assuming you modify the existing DownloadImageAsync method
-    Debug.Log("Download Background Done.");
+    private void DownloadBackgroundImage(string imageUrl, string fileName) {
+        StorageReference imageRef = _instance.GetReferenceFromUrl(imageUrl);
+        DownloadBackImageAsync(imageRef, fileName);
     }
+
+    private void DownloadBackImageAsync(StorageReference reference, string localFileName) {
+        const long maxAllowedSize = 6 * 1024 * 1024; // 6MB
+        reference.GetBytesAsync(maxAllowedSize).ContinueWithOnMainThread(task => {
+            if (task.IsFaulted || task.IsCanceled) {
+                Debug.LogError($"Download failed for {localFileName}: {task.Exception}");
+            } else {
+                byte[] fileContents = task.Result;
+                string localPath = Path.Combine(Application.persistentDataPath, localFileName);
+                File.WriteAllBytes(localPath, fileContents);
+                Debug.Log($"Background image '{localFileName}' saved to {localPath}");
+                OnImageDownloaded?.Invoke();
+                // Log the size of the file
+                FileInfo fileInfo = new FileInfo(localPath);
+                Debug.Log($"Size of '{localFileName}': {fileInfo.Length} bytes");
+            }
+        });
+    }
+
+
+
+
+
 
     private void OnOwnedButtonClicked(string itemId, string localFileName) {
     // Save the local file name of the purchased item
     PlayerPrefs.SetString("selectedDLCImage", localFileName);
     PlayerPrefs.Save();
     // Assuming you call this method when the Owned button is clicked
-    }   
+    }
+
+   
 
 
 
